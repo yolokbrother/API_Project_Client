@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import ResponsiveAppbar from "../components/index/responsiveAppbar.jsx";
+import ResponsiveAppbar from "../components/index/responsiveAppbar.tsx";
 
 const IndexPage = () => (
 <>
