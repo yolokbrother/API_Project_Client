@@ -8,6 +8,7 @@ export default async function handler(req, res) {
     const response = await axios.post("http://localhost:3001/api/register", { email, password });
     res.status(200).json(response.data);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error("Error in frontend register.js:", error); 
+    res.status(400).json({ error: error.response.data });
   }
 }
