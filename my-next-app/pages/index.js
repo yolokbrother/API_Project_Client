@@ -1,25 +1,48 @@
 // pages/auth.js
-import { useState } from "react";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
+import { useState } from 'react';
+import { useAuth } from './AuthContext';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
+
+import { useRouter } from 'next/router'; // Import useRouter
 
 const Homepage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [responseMessage, setResponseMessage] = useState("");
+  const { user, login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [signUpCode, setSignUpCode] = useState('');
+  const [message, setMessage] = useState(null);
+
+  const router = useRouter(); // Initialize useRouter
 
   const handleSubmit = async (e, action) => {
     e.preventDefault();
-    const response = await fetch(`../api/${action}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+    setMessage(null); // Clear previous message
+  
+    const response = await fetch(`/api/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, signUpCode }),
     });
-
+  
     const data = await response.json();
-    setResponseMessage(data.message || data.error);
+  
+    if (action === 'login' && data.message) {
+      const uid = data.message.split(' ')[2];
+      login(email, uid);
+      router.push('/HomePage');
+    } else if (action === 'register') {
+      if (response.ok) {
+        setMessage({ type: 'success', text: data.message });
+      } else {
+        // If the error property is an object, convert it to a string
+        const errorMessage = typeof data.error === 'object' ? JSON.stringify(data.error) : data.error;
+        setMessage({ type: 'error', text: errorMessage });
+      }
+    }
   };
 
   return (
@@ -27,6 +50,11 @@ const Homepage = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         Registration and Login
       </Typography>
+      {message && (
+        <Alert severity={message.type === 'success' ? 'success' : 'error'} sx={{ mb: 2 }}>
+          {message.text}
+        </Alert>
+      )}
       <form>
         <TextField
           fullWidth
@@ -43,6 +71,13 @@ const Homepage = () => {
           onChange={(e) => setPassword(e.target.value)}
           margin="normal"
         />
+        <TextField
+          fullWidth
+          label="Sign Up Code"
+          value={signUpCode}
+          onChange={(e) => setSignUpCode(e.target.value)}
+          margin="normal"
+        />
         <Box mt={2}>
           <Button variant="contained" onClick={(e) => handleSubmit(e, "register")}>
             Register
@@ -52,11 +87,6 @@ const Homepage = () => {
           </Button>
         </Box>
       </form>
-      {responseMessage && (
-        <Typography variant="body1" sx={{ mt: 2, color: responseMessage.includes("Error") ? "error.main" : "success.main" }}>
-          {responseMessage}
-        </Typography>
-      )}
     </Box>
   );
 };
