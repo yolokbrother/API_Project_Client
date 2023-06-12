@@ -53,12 +53,11 @@ const ExpandMore = styled((props) => {
 // Initialize Firestore and Auth
 const firestore = getFirestore(app);
 
-function HomePage() {
+export default function CatManagment() {
     const [anchorElNav, setAnchorElNav] = useState(null);
     const [anchorElUser, setAnchorElUser] = useState(null);
-    const [expanded, setExpanded] = useState([]);
     const [settings, setSettings] = useState([]);
-    const {user, logout, loading } = useAuth();
+    const { user, logout, loading } = useAuth();
     const router = useRouter();
 
     const handleProfile = () => {
@@ -86,25 +85,7 @@ function HomePage() {
         setAnchorElUser(null);
     };
 
-    const handleExpandClick = (id) => {
-        setExpanded((prev) => {
-            // Make a copy of the previous state
-            const newState = [...prev];
-
-            // Check if the card is already expanded
-            const index = newState.indexOf(id);
-
-            // If the card is expanded, remove it from the array; otherwise, add it
-            if (index >= 0) {
-                newState.splice(index, 1);
-            } else {
-                newState.push(id);
-            }
-
-            return newState;
-        });
-    };
-
+    //user
     const fetchUserRole = async () => {
         try {
             if (user) {
@@ -114,11 +95,11 @@ function HomePage() {
                     const role = userDocSnap.data().role;
                     // Set the settings menu items based on the user role
                     if (role === 'employee') {
-                      setSettings(['Profile', 'Cat Management', 'Logout']);
+                        setSettings(['Profile', 'Cat Management', 'Logout']);
                     } else if (role === 'public') {
-                      setSettings(['Profile', 'Favourite', 'Logout']);
+                        setSettings(['Profile', 'Favourite', 'Logout']);
                     } else {
-                      setSettings([]);
+                        setSettings([]);
                     }
                 }
             }
@@ -132,7 +113,6 @@ function HomePage() {
             fetchUserRole();
         }
     }, [user]);
-
     return (
         <>
             <Box>
@@ -194,6 +174,7 @@ function HomePage() {
                                 </Menu>
                             </Box>
                             <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
+
                             <Typography
                                 variant="h5"
                                 noWrap
@@ -210,7 +191,7 @@ function HomePage() {
                                     textDecoration: 'none',
                                 }}
                             >
-                                Home
+                                Cat Management
                             </Typography>
                             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
                                 {pages.map((page) => (
@@ -300,79 +281,6 @@ function HomePage() {
 
                 </Grid>
             </Grid>
-
-            <Container maxWidth="xl" sx={{ mt: "30px", mb: "30px" }} >
-                <Box sx={{ flexGrow: 1, background: "lightgrey", pl: "10px", pr: "10px" }}>
-                    <Grid container spacing={2}>
-                        <Grid item xs={3} sm={3} md={3} xl={3} key={"service.id"}>
-                            <Card sx={{ mb: "20px" }}>
-                                <CardHeader
-                                    avatar={
-                                        <Avatar sx={{ bgcolor: red[500] }} aria-label="avatar">
-                                            R
-                                        </Avatar>
-                                    }
-                                    action={
-                                        <IconButton aria-label="settings">
-                                            <MoreVertIcon />
-                                        </IconButton>
-                                    }
-                                    title={"service.serviceImage"}
-                                    subheader={"service.serviceImage"}
-                                />
-                                <CardMedia
-                                    component="img"
-                                    height="194"
-                                    image={"service.serviceImage"}
-                                    alt="Paella dish"
-                                />
-                                <CardContent>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {"service.serviceName"}
-                                    </Typography>
-                                </CardContent>
-                                <CardActions disableSpacing>
-                                    <IconButton aria-label="add to favorites">
-                                        <FavoriteIcon />
-                                    </IconButton>
-                                    <IconButton aria-label="share">
-                                        <ShareIcon />
-                                    </IconButton>
-                                    <ExpandMore
-                                        expand={expanded.includes("service.id")}
-                                        onClick={() => handleExpandClick("service.id")}
-                                        aria-expanded={expanded.includes("service.id")}
-                                        aria-label="show more"
-                                    >
-                                        <ExpandMoreIcon />
-                                    </ExpandMore>
-
-                                </CardActions>
-                                <Collapse in={expanded.includes("service.id")} timeout="auto" unmountOnExit>
-                                    <CardContent>
-                                        <Typography paragraph>
-                                            Details:
-                                        </Typography>
-                                    </CardContent>
-                                    <Box display="flex" justifyContent="flex-end" alignItems="center" mr="10px">
-                                        <Link
-                                            href={{
-                                                pathname: '',
-                                                query: { serviceData: JSON.stringify("service") },
-                                            }}
-                                            passHref
-                                        >
-                                            Go shopping
-                                        </Link>
-                                    </Box>
-                                </Collapse>
-                            </Card>
-                        </Grid>
-                    </Grid>
-                </Box>
-            </Container>
-
         </>
-    );
+    )
 }
-export default HomePage;
