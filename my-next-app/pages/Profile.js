@@ -281,7 +281,7 @@ export default function Profile() {
                           <TextField
                             id="outlined-username"
                             label="UserName"
-                            value={userData.username || ''}
+                            value={userData.userName || ''}
                             disabled
                             sx={{ mt: 5 }}
                           />
