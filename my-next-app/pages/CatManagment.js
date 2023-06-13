@@ -25,6 +25,10 @@ import ShareIcon from '@mui/icons-material/Share';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Grid from '@mui/material/Grid';
+import TextField from '@mui/material/TextField';
+import InputLabel from '@mui/material/InputLabel';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
 
 
 import { useRouter } from 'next/router';
@@ -59,6 +63,8 @@ export default function CatManagment() {
     const [settings, setSettings] = useState([]);
     const { user, logout, loading } = useAuth();
     const router = useRouter();
+    const [location, setLocation] = React.useState('');
+
 
     const handleProfile = () => {
         router.push('/Profile');
@@ -85,23 +91,28 @@ export default function CatManagment() {
         setAnchorElUser(null);
     };
 
+    const handleChange = (event) => {
+        setLocation(event.target.value);
+    };
+
+
     //user
-    const fetchUserRole = async () => {
+    const fetchUserRole = async (userId) => {
         try {
-            if (user) {
-                const userDocRef = doc(firestore, 'userProfile', user.uid);
-                const userDocSnap = await getDoc(userDocRef);
-                if (userDocSnap.exists()) {
-                    const role = userDocSnap.data().role;
-                    // Set the settings menu items based on the user role
-                    if (role === 'employee') {
-                        setSettings(['Profile', 'Cat Management', 'Logout']);
-                    } else if (role === 'public') {
-                        setSettings(['Profile', 'Favourite', 'Logout']);
-                    } else {
-                        setSettings([]);
-                    }
+            const response = await fetch(`http://localhost:3001/api/userRole/${userId}`);
+            if (response.ok) {
+                const data = await response.json();
+                const role = data.role;
+                // Set the settings menu items based on the user role
+                if (role === 'employee') {
+                    setSettings(['Profile', 'Cat Management', 'Logout']);
+                } else if (role === 'public') {
+                    setSettings(['Profile', 'Favourite', 'Logout']);
+                } else {
+                    setSettings([]);
                 }
+            } else {
+                console.error('Error fetching user role:', response.statusText);
             }
         } catch (error) {
             console.error('Error fetching user role:', error);
@@ -110,7 +121,7 @@ export default function CatManagment() {
 
     useEffect(() => {
         if (user) {
-            fetchUserRole();
+            fetchUserRole(user.uid);
         }
     }, [user]);
     return (
@@ -261,26 +272,73 @@ export default function CatManagment() {
 
             <Toolbar />
 
-            <Grid container spacing={2}>
-                <Grid item xs={4}>
-                    <Box>
-                        <Container>
-                            <Card sx={{ minWidth: 275 }}>
-                                <CardContent>
-                                    {!loading && user && (
-                                        <>
-                                            <Typography variant="h6">Welcome! {user.email}</Typography>
-                                        </>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </Container>
-                    </Box>
-                </Grid>
-                <Grid item xs={8}>
-
-                </Grid>
-            </Grid>
+            <Container maxWidth="md" sx={{ mt: 5, mb: 5 }}>
+                <Box>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} sm={12} md={12}>
+                            {!loading && user && (
+                                <>
+                                    <Card sx={{ minWidth: 275 }}>
+                                        <Typography variant="h6" gutterBottom>
+                                            Cat Management
+                                        </Typography>
+                                        <CardContent>
+                                            <Grid container direction="column" spacing={2}>
+                                                <Grid item>
+                                                    Cat Image
+                                                    <input type="file" />
+                                                </Grid>
+                                                <Grid item>
+                                                    <TextField fullWidth
+                                                        id="outlined-role"
+                                                        label="Cat Breeds"
+                                                        sx={{ mt: 5 }}
+                                                    />
+                                                </Grid>
+                                                <Grid item>
+                                                    <TextField fullWidth
+                                                        id="outlined-email"
+                                                        label="Cat Name"
+                                                        sx={{ mt: 5 }}
+                                                    />
+                                                </Grid>
+                                                <Grid item>
+                                                    <TextField fullWidth
+                                                        id="outlined-email"
+                                                        label="Cat Description"
+                                                        multiline
+                                                        rows={4}
+                                                        sx={{ mt: 5 }}
+                                                    />
+                                                </Grid>
+                                                <Grid item>
+                                                    <FormControl fullWidth sx={{ mt: 5, mb: 5 }}>
+                                                        <InputLabel id="demo-simple-select-label">Location</InputLabel>
+                                                        <Select
+                                                            labelId="demo-simple-select-label"
+                                                            id="demo-simple-select"
+                                                            value={location}
+                                                            label="location"
+                                                            onChange={handleChange}
+                                                        >
+                                                            <MenuItem value={"Sha Tin"}>Sha Tin</MenuItem>
+                                                            <MenuItem value={"Kowloon"}>Kowloon</MenuItem>
+                                                            <MenuItem value={"Central"}>Central</MenuItem>
+                                                        </Select>
+                                                    </FormControl>
+                                                </Grid>
+                                            </Grid>
+                                        </CardContent>
+                                        <CardActions>
+                                            <Button size="small">Learn More</Button>
+                                        </CardActions>
+                                    </Card>
+                                </>
+                            )}
+                        </Grid>
+                    </Grid>
+                </Box>
+            </Container>
         </>
     )
 }

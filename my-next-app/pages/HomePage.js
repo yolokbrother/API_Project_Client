@@ -105,33 +105,34 @@ function HomePage() {
         });
     };
 
-    const fetchUserRole = async () => {
-        try {
-            if (user) {
-                const userDocRef = doc(firestore, 'userProfile', user.uid);
-                const userDocSnap = await getDoc(userDocRef);
-                if (userDocSnap.exists()) {
-                    const role = userDocSnap.data().role;
-                    // Set the settings menu items based on the user role
-                    if (role === 'employee') {
-                      setSettings(['Profile', 'Cat Management', 'Logout']);
-                    } else if (role === 'public') {
-                      setSettings(['Profile', 'Favourite', 'Logout']);
-                    } else {
-                      setSettings([]);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Error fetching user role:', error);
+  //user
+  const fetchUserRole = async (userId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/userRole/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        const role = data.role;
+        // Set the settings menu items based on the user role
+        if (role === 'employee') {
+          setSettings(['Profile', 'Cat Management', 'Logout']);
+        } else if (role === 'public') {
+          setSettings(['Profile', 'Favourite', 'Logout']);
+        } else {
+          setSettings([]);
         }
-    };
+      } else {
+        console.error('Error fetching user role:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching user role:', error);
+    }
+  };
 
-    useEffect(() => {
-        if (user) {
-            fetchUserRole();
-        }
-    }, [user]);
+  useEffect(() => {
+    if (user) {
+      fetchUserRole(user.uid);
+    }
+  }, [user]);
 
     return (
         <>

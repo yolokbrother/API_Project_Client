@@ -87,25 +87,22 @@ export default function Profile() {
   };
 
   //user
-  const fetchUserRole = async () => {
+  const fetchUserRole = async (userId) => {
     try {
-      if (user) {
-        const userDocRef = doc(firestore, 'userProfile', user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          const data = userDocSnap.data();
-          setUserData(data); // Save the user data to the state
-          console.log('User data:', data); // Log the fetched user data
-          const role = userDocSnap.data().role;
-          // Set the settings menu items based on the user role
-          if (role === 'employee') {
-            setSettings(['Profile', 'Cat Management', 'Logout']);
-          } else if (role === 'public') {
-            setSettings(['Profile', 'Favourite', 'Logout']);
-          } else {
-            setSettings([]);
-          }
+      const response = await fetch(`http://localhost:3001/api/userRole/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        const role = data.role;
+        // Set the settings menu items based on the user role
+        if (role === 'employee') {
+          setSettings(['Profile', 'Cat Management', 'Logout']);
+        } else if (role === 'public') {
+          setSettings(['Profile', 'Favourite', 'Logout']);
+        } else {
+          setSettings([]);
         }
+      } else {
+        console.error('Error fetching user role:', response.statusText);
       }
     } catch (error) {
       console.error('Error fetching user role:', error);
@@ -114,9 +111,10 @@ export default function Profile() {
 
   useEffect(() => {
     if (user) {
-      fetchUserRole();
+      fetchUserRole(user.uid);
     }
   }, [user]);
+
   return (
     <>
       <Box>
@@ -274,7 +272,7 @@ export default function Profile() {
                   <Card sx={{ minWidth: 275 }}>
                     <CardContent>
                       <Typography variant="h6" gutterBottom>
-                        Welcome! {user.email}
+                        Profile
                       </Typography>
                       <Grid container direction="column" spacing={2}>
                         <Grid item>
