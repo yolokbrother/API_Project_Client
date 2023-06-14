@@ -29,9 +29,20 @@ import TextField from '@mui/material/TextField';
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
-
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 
 import { useRouter } from 'next/router';
+import {
+    TableContainer,
+    Table,
+    TableHead,
+    TableRow,
+    TableCell,
+    TableBody,
+    TablePagination,
+    Paper,
+} from "@mui/material";
 
 //Auth
 import { useAuth } from './AuthContext';
@@ -61,10 +72,21 @@ export default function CatManagment() {
     const [anchorElNav, setAnchorElNav] = useState(null);
     const [anchorElUser, setAnchorElUser] = useState(null);
     const [settings, setSettings] = useState([]);
+    const [imagePreview, setImagePreview] = useState(null);
     const { user, logout, loading } = useAuth();
     const router = useRouter();
-    const [location, setLocation] = React.useState('');
 
+
+    const [catImage, setCatImage] = useState("");
+    const [catBreed, setCatBreed] = useState("");
+    const [catName, setCatName] = useState("");
+    const [catDescription, setCatDescription] = useState("");
+    const [location, setLocation] = useState("");
+
+    //catlist
+    const [catData, setCatData] = useState([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const handleProfile = () => {
         router.push('/Profile');
@@ -95,6 +117,52 @@ export default function CatManagment() {
         setLocation(event.target.value);
     };
 
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData();
+        formData.append("catBreed", catBreed);
+        formData.append("catName", catName);
+        formData.append("catDescription", catDescription);
+        formData.append("catImage", catImage);
+        formData.append("location", location);
+
+        try {
+            const response = await fetch("http://localhost:3001/api/add-cat", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Cat added:", data.catId);
+
+                // Reset the form fields
+                setCatImage("");
+                setCatBreed("");
+                setCatName("");
+                setCatDescription("");
+                setLocation("");
+            } else {
+                console.error("Error adding cat");
+            }
+        } catch (error) {
+            console.error("Error adding cat:", error);
+        }
+    };
+
+    const handleImageChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            setImagePreview(null);
+        }
+    };
 
     //user
     const fetchUserRole = async (userId) => {
@@ -124,6 +192,41 @@ export default function CatManagment() {
             fetchUserRole(user.uid);
         }
     }, [user]);
+
+    //cats
+    useEffect(() => {
+        const fetchData = async () => {
+            const response = await fetch("http://localhost:3001/api/cats");
+            const data = await response.json();
+            setCatData(data);
+        };
+        fetchData();
+    }, []);
+
+    //table
+    const handleChangePage = (event, newPage) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
+    const handleEdit = (cat) => {
+        router.push({ pathname: "/edit-cat", query: { catId: cat.id } });
+    };
+
+    //cat delete
+    const handleDelete = async (catId) => {
+        const response = await fetch(`http://localhost:3001/api/cats/${catId}`, { method: "DELETE" });
+        if (response.ok) {
+            setCatData(catData.filter((cat) => cat.id !== catId));
+        } else {
+            // Handle error
+        }
+    };
+
     return (
         <>
             <Box>
@@ -278,63 +381,153 @@ export default function CatManagment() {
                         <Grid item xs={12} sm={12} md={12}>
                             {!loading && user && (
                                 <>
-                                    <Card sx={{ minWidth: 275 }}>
-                                        <Typography variant="h6" gutterBottom>
-                                            Cat Management
-                                        </Typography>
-                                        <CardContent>
-                                            <Grid container direction="column" spacing={2}>
-                                                <Grid item>
-                                                    Cat Image
-                                                    <input type="file" />
+                                    <form onSubmit={handleSubmit}>
+                                        <Card sx={{ minWidth: 275 }}>
+                                            <Typography variant="h6" gutterBottom>
+                                                Cat Management
+                                            </Typography>
+                                            <CardContent>
+                                                <Grid container direction="column" spacing={2}>
+                                                    <Grid item>
+                                                        Cat Image
+                                                        <input
+                                                            type="file"
+                                                            onChange={(event) => {
+                                                                setCatImage(event.target.files[0]);
+                                                                handleImageChange(event);
+                                                            }}
+                                                        />
+                                                        {imagePreview && (
+                                                            <Avatar
+                                                                alt="Image Preview"
+                                                                src={imagePreview}
+                                                                sx={{ width: 128, height: 128, marginTop: 2 }}
+                                                            />
+                                                        )}
+                                                    </Grid>
+                                                    <Grid item>
+                                                        <TextField
+                                                            fullWidth
+                                                            id="outlined-role"
+                                                            label="Cat Breeds"
+                                                            sx={{ mt: 5 }}
+                                                            value={catBreed}
+                                                            onChange={(event) => setCatBreed(event.target.value)}
+                                                        />
+                                                    </Grid>
+                                                    <Grid item>
+                                                        <TextField
+                                                            fullWidth
+                                                            id="outlined-email"
+                                                            label="Cat Name"
+                                                            sx={{ mt: 5 }}
+                                                            value={catName}
+                                                            onChange={(event) => setCatName(event.target.value)}
+                                                        />
+                                                    </Grid>
+                                                    <Grid item>
+                                                        <TextField
+                                                            fullWidth
+                                                            id="outlined-email"
+                                                            label="Cat Description"
+                                                            multiline
+                                                            rows={4}
+                                                            sx={{ mt: 5 }}
+                                                            value={catDescription}
+                                                            onChange={(event) => setCatDescription(event.target.value)}
+                                                        />
+                                                    </Grid>
+                                                    <Grid item>
+                                                        <FormControl fullWidth sx={{ mt: 5, mb: 5 }}>
+                                                            <InputLabel id="demo-simple-select-label">Location</InputLabel>
+                                                            <Select
+                                                                labelId="demo-simple-select-label"
+                                                                id="demo-simple-select"
+                                                                value={location}
+                                                                label="location"
+                                                                onChange={handleChange}
+                                                            >
+                                                                <MenuItem value={"Sha Tin"}>Sha Tin</MenuItem>
+                                                                <MenuItem value={"Kowloon"}>Kowloon</MenuItem>
+                                                                <MenuItem value={"Central"}>Central</MenuItem>
+                                                            </Select>
+                                                        </FormControl>
+                                                    </Grid>
                                                 </Grid>
-                                                <Grid item>
-                                                    <TextField fullWidth
-                                                        id="outlined-role"
-                                                        label="Cat Breeds"
-                                                        sx={{ mt: 5 }}
-                                                    />
-                                                </Grid>
-                                                <Grid item>
-                                                    <TextField fullWidth
-                                                        id="outlined-email"
-                                                        label="Cat Name"
-                                                        sx={{ mt: 5 }}
-                                                    />
-                                                </Grid>
-                                                <Grid item>
-                                                    <TextField fullWidth
-                                                        id="outlined-email"
-                                                        label="Cat Description"
-                                                        multiline
-                                                        rows={4}
-                                                        sx={{ mt: 5 }}
-                                                    />
-                                                </Grid>
-                                                <Grid item>
-                                                    <FormControl fullWidth sx={{ mt: 5, mb: 5 }}>
-                                                        <InputLabel id="demo-simple-select-label">Location</InputLabel>
-                                                        <Select
-                                                            labelId="demo-simple-select-label"
-                                                            id="demo-simple-select"
-                                                            value={location}
-                                                            label="location"
-                                                            onChange={handleChange}
-                                                        >
-                                                            <MenuItem value={"Sha Tin"}>Sha Tin</MenuItem>
-                                                            <MenuItem value={"Kowloon"}>Kowloon</MenuItem>
-                                                            <MenuItem value={"Central"}>Central</MenuItem>
-                                                        </Select>
-                                                    </FormControl>
-                                                </Grid>
-                                            </Grid>
-                                        </CardContent>
-                                        <CardActions>
-                                            <Button size="small">Learn More</Button>
-                                        </CardActions>
-                                    </Card>
+                                            </CardContent>
+                                            <CardActions>
+                                                <Button size="small" type="submit">
+                                                    Submit
+                                                </Button>
+                                            </CardActions>
+                                        </Card>
+                                    </form>
                                 </>
                             )}
+                        </Grid>
+                    </Grid>
+                </Box>
+            </Container>
+
+            <Container maxWidth="md" sx={{ mt: 5, mb: 5 }}>
+                <Box>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} sm={12} md={12}>
+                            <Paper>
+                                <TableContainer>
+                                    <Table>
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Breed</TableCell>
+                                                <TableCell>Name</TableCell>
+                                                <TableCell>Description</TableCell>
+                                                <TableCell>Location</TableCell>
+                                                <TableCell>Image</TableCell>
+                                                <TableCell>Actions</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {catData
+                                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                                .map((cat) => (
+                                                    <TableRow key={cat.id}>
+                                                        <TableCell>{cat.catBreed}</TableCell>
+                                                        <TableCell>{cat.catName}</TableCell>
+                                                        <TableCell>{cat.catDescription}</TableCell>
+                                                        <TableCell>{cat.location}</TableCell>
+                                                        <TableCell>
+                                                            <img src={cat.catImage} alt={cat.catName} height="50" />
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Button
+                                                                variant="contained"
+                                                                color="primary"
+                                                                onClick={() => handleEdit(cat)}
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                            <Button
+                                                                variant="contained"
+                                                                color="secondary"
+                                                                onClick={() => handleDelete(cat.id)}
+                                                            >
+                                                                Delete
+                                                            </Button>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                                <TablePagination
+                                    component="div"
+                                    count={catData.length}
+                                    page={page}
+                                    onPageChange={handleChangePage}
+                                    rowsPerPage={rowsPerPage}
+                                    onRowsPerPageChange={handleChangeRowsPerPage}
+                                />
+                            </Paper>
                         </Grid>
                     </Grid>
                 </Box>
