@@ -127,6 +127,11 @@ export default function CatManagment() {
         formData.append("catImage", catImage);
         formData.append("location", location);
 
+        // Append user uid
+        if (user) {
+            formData.append("userUid", user.uid);
+        }
+
         try {
             const response = await fetch("http://localhost:3001/api/add-cat", {
                 method: "POST",
@@ -187,21 +192,16 @@ export default function CatManagment() {
         }
     };
 
-    useEffect(() => {
-        if (user) {
-            fetchUserRole(user.uid);
-        }
-    }, [user]);
-
-    //cats
-    useEffect(() => {
-        const fetchData = async () => {
-            const response = await fetch("http://localhost:3001/api/cats");
-            const data = await response.json();
-            setCatData(data);
-        };
-        fetchData();
-    }, []);
+    //get all cats
+    const fetchCatData = async (userUid) => {
+        try {
+          const response = await fetch(`http://localhost:3001/api/cats?userUid=${userUid}`);
+          const data = await response.json();
+          setCatData(data);
+        } catch (error) {
+          console.error("Error fetching cat data:", error);
+        } 
+    };
 
     //table
     const handleChangePage = (event, newPage) => {
@@ -227,6 +227,13 @@ export default function CatManagment() {
         }
     };
 
+    //called whenever the user prop updates
+    useEffect(() => {
+        if (user) {
+            fetchUserRole(user.uid);
+            fetchCatData(user.uid)
+        }
+    }, [user]);
     return (
         <>
             <Box>
@@ -487,7 +494,8 @@ export default function CatManagment() {
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
-                                            {catData
+                                            {!loading && user && catData
+                                                .filter(cat => cat.userUid === user.uid)
                                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                                 .map((cat) => (
                                                     <TableRow key={cat.id}>
