@@ -109,11 +109,24 @@ export default function Profile() {
     }
   };
 
+  // Fetch user data from the backend API
+  const fetchUserData = async (userId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/userData/${userId}`);
+      const data = await response.json();
+      setUserData(data);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchUserRole(user.uid);
+      fetchUserData(user.uid);
     }
   }, [user]);
+
 
   return (
     <>
@@ -279,7 +292,7 @@ export default function Profile() {
                           <TextField
                             id="outlined-username"
                             label="UserName"
-                            value={userData.userName || ''}
+                            value={user ? userData.userName || '' : ''}
                             disabled
                             sx={{ mt: 5 }}
                           />
@@ -288,7 +301,7 @@ export default function Profile() {
                           <TextField
                             id="outlined-role"
                             label="Role"
-                            value={userData.role || ''}
+                            value={user ? userData.role || '' : ''}
                             disabled
                             sx={{ mt: 5 }}
                           />
@@ -297,7 +310,7 @@ export default function Profile() {
                           <TextField
                             id="outlined-email"
                             label="Email"
-                            value={user ? user.email : ''}
+                            value={user ? userData.email || '' : ''}
                             disabled
                             sx={{ mt: 5, mb: 5 }}
                           />
