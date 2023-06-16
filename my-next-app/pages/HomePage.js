@@ -25,6 +25,8 @@ import ShareIcon from '@mui/icons-material/Share';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Grid from '@mui/material/Grid';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 
 import { useRouter } from 'next/router';
@@ -58,7 +60,13 @@ function HomePage() {
     const [anchorElUser, setAnchorElUser] = useState(null);
     const [expanded, setExpanded] = useState([]);
     const [settings, setSettings] = useState([]);
-    const {user, logout, loading } = useAuth();
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [alertSeverity, setAlertSeverity] = useState('success');
+    const { user, logout, loading } = useAuth();
+
+    //catlist
+    const [catData, setCatData] = useState([]);
+
     const router = useRouter();
 
     const handleProfile = () => {
@@ -105,34 +113,79 @@ function HomePage() {
         });
     };
 
-  //user
-  const fetchUserRole = async (userId) => {
-    try {
-      const response = await fetch(`http://localhost:3001/api/userRole/${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        const role = data.role;
-        // Set the settings menu items based on the user role
-        if (role === 'employee') {
-          setSettings(['Profile', 'Cat Management', 'Logout']);
-        } else if (role === 'public') {
-          setSettings(['Profile', 'Favourite', 'Logout']);
-        } else {
-          setSettings([]);
+    //user
+    const fetchUserRole = async (userId) => {
+        try {
+            const response = await fetch(`http://localhost:3001/api/userRole/${userId}`);
+            if (response.ok) {
+                const data = await response.json();
+                const role = data.role;
+                // Set the settings menu items based on the user role
+                if (role === 'employee') {
+                    setSettings(['Profile', 'Cat Management', 'Logout']);
+                } else if (role === 'public') {
+                    setSettings(['Profile', 'Favourite', 'Logout']);
+                } else {
+                    setSettings([]);
+                }
+            } else {
+                console.error('Error fetching user role:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error fetching user role:', error);
         }
-      } else {
-        console.error('Error fetching user role:', response.statusText);
-      }
-    } catch (error) {
-      console.error('Error fetching user role:', error);
-    }
-  };
+    };
 
-  useEffect(() => {
-    if (user) {
-      fetchUserRole(user.uid);
-    }
-  }, [user]);
+    //get all cats with userUid
+    const fetchCatData = async () => {
+        try {
+            const response = await fetch(`http://localhost:3001/api/AllCats`);
+            const data = await response.json();
+            setCatData(data);
+        } catch (error) {
+            console.error("Error fetching cat data:", error);
+        }
+    };
+
+    //favourite
+    const handleFavoriteClick = async (cat) => {
+        let userUid;
+        if (user) {
+            userUid = user.uid;
+        }
+
+        const catWithUid = { ...cat, favouriteUid: userUid };
+        try {
+            const response = await fetch('http://localhost:3001/api/add-favorite', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(catWithUid),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to add favorite');
+            }
+
+            // Show a success message 
+            setAlertSeverity('success');
+            setSnackbarOpen(true);
+        } catch (error) {
+            console.error('Error adding favorite:', error);
+            // Show an error message
+            setAlertSeverity('error');
+            setSnackbarOpen(true);
+
+        }
+    };
+
+    useEffect(() => {
+        if (user) {
+            fetchUserRole(user.uid);
+            fetchCatData()
+        }
+    }, [user]);
 
     return (
         <>
@@ -302,73 +355,89 @@ function HomePage() {
                 </Grid>
             </Grid>
 
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={6000}
+                onClose={() => setSnackbarOpen(false)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert onClose={() => setSnackbarOpen(false)} severity={alertSeverity} sx={{ width: '100%' }}>
+                    {alertSeverity === 'success' ? 'Favorite added successfully' : 'Error adding favorite'}
+                </Alert>
+            </Snackbar>
             <Container maxWidth="xl" sx={{ mt: "30px", mb: "30px" }} >
                 <Box sx={{ flexGrow: 1, background: "lightgrey", pl: "10px", pr: "10px" }}>
                     <Grid container spacing={2}>
-                        <Grid item xs={3} sm={3} md={3} xl={3} key={"service.id"}>
-                            <Card sx={{ mb: "20px" }}>
-                                <CardHeader
-                                    avatar={
-                                        <Avatar sx={{ bgcolor: red[500] }} aria-label="avatar">
-                                            R
-                                        </Avatar>
-                                    }
-                                    action={
-                                        <IconButton aria-label="settings">
-                                            <MoreVertIcon />
-                                        </IconButton>
-                                    }
-                                    title={"service.serviceImage"}
-                                    subheader={"service.serviceImage"}
-                                />
-                                <CardMedia
-                                    component="img"
-                                    height="194"
-                                    image={"service.serviceImage"}
-                                    alt="Paella dish"
-                                />
-                                <CardContent>
-                                    <Typography variant="body2" color="text.secondary">
-                                        {"service.serviceName"}
-                                    </Typography>
-                                </CardContent>
-                                <CardActions disableSpacing>
-                                    <IconButton aria-label="add to favorites">
-                                        <FavoriteIcon />
-                                    </IconButton>
-                                    <IconButton aria-label="share">
-                                        <ShareIcon />
-                                    </IconButton>
-                                    <ExpandMore
-                                        expand={expanded.includes("service.id")}
-                                        onClick={() => handleExpandClick("service.id")}
-                                        aria-expanded={expanded.includes("service.id")}
-                                        aria-label="show more"
-                                    >
-                                        <ExpandMoreIcon />
-                                    </ExpandMore>
-
-                                </CardActions>
-                                <Collapse in={expanded.includes("service.id")} timeout="auto" unmountOnExit>
+                        {catData.map((cat) => (
+                            <Grid item xs={3} sm={3} md={3} xl={3} key={cat.id}>
+                                <Card sx={{ mb: "20px" }}>
+                                    <CardHeader
+                                        avatar={
+                                            <Avatar sx={{ bgcolor: red[500] }} aria-label="avatar">
+                                                R
+                                            </Avatar>
+                                        }
+                                        action={
+                                            <IconButton aria-label="settings">
+                                                <MoreVertIcon />
+                                            </IconButton>
+                                        }
+                                        title={cat.catName}
+                                    />
+                                    <CardMedia
+                                        component="img"
+                                        height="194"
+                                        image={cat.catImage}
+                                    />
                                     <CardContent>
-                                        <Typography paragraph>
-                                            Details:
+                                        <Typography variant="body2" color="text.secondary">
+                                            {cat.catName}
                                         </Typography>
                                     </CardContent>
-                                    <Box display="flex" justifyContent="flex-end" alignItems="center" mr="10px">
-                                        <Link
-                                            href={{
-                                                pathname: '',
-                                                query: { serviceData: JSON.stringify("service") },
+                                    <CardActions disableSpacing>
+                                        <IconButton
+                                            aria-label="add to favorites"
+                                            onClick={() => handleFavoriteClick(cat)}
+                                            sx={{
+                                                '&:hover': {
+                                                    color: 'red',
+                                                },
                                             }}
-                                            passHref
                                         >
-                                            Go shopping
-                                        </Link>
-                                    </Box>
-                                </Collapse>
-                            </Card>
-                        </Grid>
+                                            <FavoriteIcon />
+                                        </IconButton>
+                                        <IconButton aria-label="share">
+                                            <ShareIcon />
+                                        </IconButton>
+                                        <ExpandMore
+                                            expand={expanded.includes(cat.id)}
+                                            onClick={() => handleExpandClick(cat.id)}
+                                            aria-expanded={expanded.includes(cat.id)}
+                                            aria-label="show more"
+                                        >
+                                            <ExpandMoreIcon />
+                                        </ExpandMore>
+
+                                    </CardActions>
+                                    <Collapse in={expanded.includes(cat.id)} timeout="auto" unmountOnExit>
+                                        <CardContent>
+                                            <Typography paragraph>
+                                                Cat Breed:{cat.catBreed}
+                                            </Typography>
+                                            <Typography paragraph>
+                                                Cat Description: {cat.catDescription}
+                                            </Typography>
+                                            <Typography paragraph>
+                                                Location: {cat.location}
+                                            </Typography>
+                                        </CardContent>
+                                        <Box display="flex" justifyContent="flex-end" alignItems="center" mr="10px">
+
+                                        </Box>
+                                    </Collapse>
+                                </Card>
+                            </Grid>
+                        ))}
                     </Grid>
                 </Box>
             </Container>

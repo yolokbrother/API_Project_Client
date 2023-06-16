@@ -192,7 +192,7 @@ export default function CatManagment() {
         }
     };
 
-    //get all cats
+    //get all cats with userUid
     const fetchCatData = async (userUid) => {
         try {
           const response = await fetch(`http://localhost:3001/api/cats?userUid=${userUid}`);
