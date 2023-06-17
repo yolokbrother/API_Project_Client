@@ -79,6 +79,11 @@ function HomePage() {
         handleCloseUserMenu();
     };
 
+    const handleFavourite = () => {
+        router.push('/FavouritePage');
+        handleCloseUserMenu();
+    };
+
     const handleOpenNavMenu = (event) => {
         setAnchorElNav(event.currentTarget);
     };
@@ -136,7 +141,7 @@ function HomePage() {
         }
     };
 
-    //get all cats with userUid
+    //get all cats
     const fetchCatData = async () => {
         try {
             const response = await fetch(`http://localhost:3001/api/AllCats`);
@@ -303,7 +308,7 @@ function HomePage() {
                             <Box sx={{ flexGrow: 0 }}>
                                 <Tooltip title="Open settings">
                                     <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                                        <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+                                        <Avatar sx={{ bgcolor: deepOrange[500] }}>U</Avatar>
                                     </IconButton>
                                 </Tooltip>
                                 <Menu
@@ -335,6 +340,8 @@ function HomePage() {
                                                         handleProfile();
                                                     } else if (setting === 'Cat Management') {
                                                         handleCatManagement();
+                                                    } else if (setting === 'Favourite') {
+                                                        handleFavourite();
                                                     } else if (setting === 'Logout') {
                                                         logout();
                                                     } else {
@@ -356,15 +363,15 @@ function HomePage() {
 
             <Toolbar />
 
-            <Grid container spacing={2}>
-                <Grid item xs={4}>
+            <Grid container spacing={2} justifyContent="center">
+                <Grid item xs={12} sm={8} md={6}>
                     <Box>
                         <Container>
-                            <Card sx={{ minWidth: 275 }}>
+                            <Card sx={{ minWidth: 275, mt:2 }}>
                                 <CardContent>
                                     {!loading && user && (
                                         <>
-                                            <Typography variant="h6">Welcome! {user.email}</Typography>
+                                            <Typography variant="h6" align="center">Welcome! {user.email}</Typography>
                                         </>
                                     )}
                                 </CardContent>

@@ -71,6 +71,11 @@ export default function Profile() {
     handleCloseUserMenu();
   };
 
+  const handleFavourite = () => {
+    router.push('/FavouritePage');
+    handleCloseUserMenu();
+  };
+
   const handleOpenNavMenu = (event) => {
     setAnchorElNav(event.currentTarget);
   };
@@ -223,7 +228,7 @@ export default function Profile() {
               <Box sx={{ flexGrow: 0 }}>
                 <Tooltip title="Open settings">
                   <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                    <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+                    <Avatar sx={{ bgcolor: deepOrange[500] }}>U</Avatar>
                   </IconButton>
                 </Tooltip>
                 <Menu
@@ -255,6 +260,8 @@ export default function Profile() {
                             handleProfile();
                           } else if (setting === 'Cat Management') {
                             handleCatManagement();
+                          } else if (setting === 'Favourite') {
+                            handleFavourite();
                           } else if (setting === 'Logout') {
                             logout();
                           } else {
