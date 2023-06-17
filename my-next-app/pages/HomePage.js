@@ -27,6 +27,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Grid from '@mui/material/Grid';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import { TextField, Select, InputLabel, FormControl} from '@mui/material';
 
 
 import { useRouter } from 'next/router';
@@ -39,8 +40,6 @@ import Link from 'next/link';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import app from '../firebase/firebaseClient';
 
-const pages = ['Products', 'Pricing', 'Blog'];
-
 const ExpandMore = styled((props) => {
     const { expand, ...other } = props;
     return <IconButton {...other} />;
@@ -51,9 +50,6 @@ const ExpandMore = styled((props) => {
         duration: theme.transitions.duration.shortest,
     }),
 }));
-
-// Initialize Firestore and Auth
-const firestore = getFirestore(app);
 
 function HomePage() {
     const [anchorElNav, setAnchorElNav] = useState(null);
@@ -66,6 +62,10 @@ function HomePage() {
 
     //catlist
     const [catData, setCatData] = useState([]);
+
+    const [searchInput, setSearchInput] = useState('');
+    const [locationFilter, setLocationFilter] = useState('');
+    const [filteredData, setFilteredData] = useState(catData);
 
     const router = useRouter();
 
@@ -142,6 +142,7 @@ function HomePage() {
             const response = await fetch(`http://localhost:3001/api/AllCats`);
             const data = await response.json();
             setCatData(data);
+            setFilteredData(data);
         } catch (error) {
             console.error("Error fetching cat data:", error);
         }
@@ -180,10 +181,21 @@ function HomePage() {
         }
     };
 
+    //search
+    const handleSearchClick = () => {
+        const search = searchInput.toLowerCase();
+        const filtered = catData.filter(cat => {
+            const nameAndBreedMatch = cat.catName.toLowerCase().includes(search) || cat.catBreed.toLowerCase().includes(search);
+            const locationMatch = !locationFilter || cat.location === locationFilter;
+            return nameAndBreedMatch && locationMatch;
+        });
+        setFilteredData(filtered);
+    };
+
     useEffect(() => {
         if (user) {
             fetchUserRole(user.uid);
-            fetchCatData()
+            fetchCatData()           
         }
     }, [user]);
 
@@ -209,7 +221,7 @@ function HomePage() {
                                     textDecoration: 'none',
                                 }}
                             >
-                                Home
+                                The Pet Shelter
                             </Typography>
                             <Box sx={{ flexGrow: 1, display: { xs: 'flex', md: 'none' } }}>
                                 <IconButton
@@ -240,11 +252,6 @@ function HomePage() {
                                         display: { xs: 'block', md: 'none' },
                                     }}
                                 >
-                                    {pages.map((page) => (
-                                        <MenuItem key={page} onClick={handleCloseNavMenu}>
-                                            <Typography textAlign="center">{page}</Typography>
-                                        </MenuItem>
-                                    ))}
                                 </Menu>
                             </Box>
                             <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
@@ -264,18 +271,32 @@ function HomePage() {
                                     textDecoration: 'none',
                                 }}
                             >
-                                Home
+                                The Pet Shelter
                             </Typography>
                             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-                                {pages.map((page) => (
-                                    <Button
-                                        key={page}
-                                        onClick={handleCloseNavMenu}
-                                        sx={{ my: 2, color: 'white', display: 'block' }}
+                                <TextField
+                                    label="Search by name or breed"
+                                    value={searchInput}
+                                    onChange={(e) => setSearchInput(e.target.value)}
+                                    variant="outlined"
+                                />
+                                <FormControl variant="outlined">
+                                    <InputLabel id="location-filter-label">Filter by location</InputLabel>
+                                    <Select
+                                        labelId="location-filter-label"
+                                        value={locationFilter}
+                                        onChange={(e) => setLocationFilter(e.target.value)}
+                                        label="Filter by location"
                                     >
-                                        {page}
-                                    </Button>
-                                ))}
+                                        <MenuItem value="">
+                                            <em>None</em>
+                                        </MenuItem>
+                                        <MenuItem value="Sha Tin">Sha Tin</MenuItem>
+                                        <MenuItem value="Kowloon">Kowloon</MenuItem>
+                                        <MenuItem value="Kowloon">Central</MenuItem>
+                                    </Select>
+                                </FormControl>
+                                <Button variant="contained" onClick={handleSearchClick}>Search</Button>
                             </Box>
 
                             <Box sx={{ flexGrow: 0 }}>
@@ -368,7 +389,7 @@ function HomePage() {
             <Container maxWidth="xl" sx={{ mt: "30px", mb: "30px" }} >
                 <Box sx={{ flexGrow: 1, background: "lightgrey", pl: "10px", pr: "10px" }}>
                     <Grid container spacing={2}>
-                        {catData.map((cat) => (
+                        {filteredData.map((cat) => (
                             <Grid item xs={3} sm={3} md={3} xl={3} key={cat.id}>
                                 <Card sx={{ mb: "20px" }}>
                                     <CardHeader

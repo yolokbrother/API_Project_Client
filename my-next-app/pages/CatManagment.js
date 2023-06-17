@@ -52,6 +52,7 @@ import Link from 'next/link';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import app from '../firebase/firebaseClient';
 
+
 const pages = ['Products', 'Pricing', 'Blog'];
 
 const ExpandMore = styled((props) => {
@@ -87,6 +88,7 @@ export default function CatManagment() {
     const [catData, setCatData] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+
 
     const handleProfile = () => {
         router.push('/Profile');
@@ -135,6 +137,9 @@ export default function CatManagment() {
         try {
             const response = await fetch("http://localhost:3001/api/add-cat", {
                 method: "POST",
+                headers: {
+                    'Authorization': user.idToken,
+                },
                 body: formData,
             });
 
@@ -195,12 +200,12 @@ export default function CatManagment() {
     //get all cats with userUid
     const fetchCatData = async (userUid) => {
         try {
-          const response = await fetch(`http://localhost:3001/api/cats?userUid=${userUid}`);
-          const data = await response.json();
-          setCatData(data);
+            const response = await fetch(`http://localhost:3001/api/cats?userUid=${userUid}`);
+            const data = await response.json();
+            setCatData(data);
         } catch (error) {
-          console.error("Error fetching cat data:", error);
-        } 
+            console.error("Error fetching cat data:", error);
+        }
     };
 
     //table

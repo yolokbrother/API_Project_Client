@@ -12,8 +12,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter(); // Initialize useRouter
 
-  const login = (email, uid) => {
-    const newUser = { email, uid };
+  const login = (email, uid, idToken) => {
+    const newUser = { email, uid, idToken };
     setUser(newUser);
     localStorage.setItem('user', JSON.stringify(newUser));
   };

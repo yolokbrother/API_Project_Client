@@ -1,5 +1,6 @@
 // firebaseClient.js
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
     apiKey: "AIzaSyCA9lSzD78MgxPp7bSIGFRMSQgdmTLnhJk",
@@ -11,6 +12,12 @@ const firebaseConfig = {
     measurementId: "G-CYE9WDLH89"
   };
 
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase only if it's not already initialized
+if (typeof window !== 'undefined' && getApps().length === 0) {
+  initializeApp(firebaseConfig);
+}
 
-export default app;
+const firebaseApp = typeof window !== 'undefined' ? getApps()[0] : null;
+const auth = typeof window !== 'undefined' ? getAuth(firebaseApp) : null;
+
+export { auth };

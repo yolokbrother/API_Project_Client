@@ -1,17 +1,17 @@
 // pages/auth.js
 import { useState } from 'react';
-import { useAuth } from './AuthContext';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
-import MenuIcon from '@mui/icons-material/Menu';
-import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
 import AppBar from '@mui/material/AppBar';
-
-import { useRouter } from 'next/router'; // Import useRouter
+import { auth } from '../firebase/firebaseClient';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useRouter } from 'next/router';
+import { useAuth } from './AuthContext';
+import { getIdToken } from 'firebase/auth';
 
 const Homepage = () => {
   const { user, login } = useAuth();
@@ -20,34 +20,56 @@ const Homepage = () => {
   const [signUpCode, setSignUpCode] = useState('');
   const [message, setMessage] = useState(null);
 
-  const router = useRouter(); // Initialize useRouter
+  const router = useRouter();
 
   const handleSubmit = async (e, action) => {
     e.preventDefault();
-    setMessage(null); // Clear previous message
+    setMessage(null);
 
-    const response = await fetch(`/api/${action}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, signUpCode }),
-    });
+    if (action === 'login') {
+      signInWithEmailAndPassword(auth, email, password)
+        .then(async (userCredential) => {
+          // Call your /api/login endpoint to fetch the user record
+          console.log('User signed in:', userCredential.user);
+          const idToken = await getIdToken(userCredential.user);
+          console.log('User ID token:', idToken);
+          const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
 
-    const data = await response.json();
-
-    if (action === 'login' && data.message) {
-      const uid = data.message.split(' ')[2];
-      login(email, uid);
-      router.push('/HomePage');
+          if (response.ok) {
+            const data = await response.json();
+            const { uid } = data.user;
+            login(email, uid, idToken);
+            router.push('/HomePage');
+          } else {
+            const error = await response.json();
+            setMessage({ type: 'error', text: error.message });
+          }
+        })
+        .catch((error) => {
+          setMessage({ type: 'error', text: error.message });
+        });
     } else if (action === 'register') {
+      // Registration logic remains unchanged
+      const response = await fetch(`/api/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, signUpCode }),
+      });
+
+      const data = await response.json();
+
       if (response.ok) {
         setMessage({ type: 'success', text: data.message });
       } else {
-        // If the error property is an object, convert it to a string
         const errorMessage = typeof data.error === 'object' ? JSON.stringify(data.error) : data.error;
         setMessage({ type: 'error', text: errorMessage });
       }
     }
-  };
+  }
 
   return (
     <>
@@ -60,7 +82,7 @@ const Homepage = () => {
           </Toolbar>
         </AppBar>
       </Box>
-      
+
       <Box sx={{ width: "100%", maxWidth: 400, margin: "auto", pt: 10 }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Registration and Login
