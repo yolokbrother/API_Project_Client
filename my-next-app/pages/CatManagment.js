@@ -224,7 +224,12 @@ export default function CatManagment() {
 
     //cat delete
     const handleDelete = async (catId) => {
-        const response = await fetch(`http://localhost:3001/api/cats/${catId}`, { method: "DELETE" });
+        const response = await fetch(`http://localhost:3001/api/cats/${catId}`, { 
+            method: "DELETE",
+            headers: {
+                'Authorization': user.idToken,
+            }
+         });
         if (response.ok) {
             setCatData(catData.filter((cat) => cat.id !== catId));
         } else {

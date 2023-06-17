@@ -161,6 +161,7 @@ function HomePage() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': user.idToken,
                 },
                 body: JSON.stringify(catWithUid),
             });

@@ -56,6 +56,7 @@ const EditCat = () => {
   const router = useRouter();
   const { catId } = router.query;
   const [catData, setCatData] = useState(null);
+  const { user, logout, loading } = useAuth();
 
   useEffect(() => {
     if (catId) {
@@ -81,6 +82,7 @@ const EditCat = () => {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
+        'Authorization': user.idToken,
       },
       body: JSON.stringify(updatedCatData),
     });
