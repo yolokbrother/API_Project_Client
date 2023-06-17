@@ -27,8 +27,10 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Grid from '@mui/material/Grid';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-import { TextField, Select, InputLabel, FormControl} from '@mui/material';
-
+import { TextField, Select, InputLabel, FormControl } from '@mui/material';
+import { deepOrange, deepPurple } from '@mui/material/colors';
+import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
+import ChatComponent from './ChatComponent';
 
 import { useRouter } from 'next/router';
 
@@ -59,6 +61,9 @@ function HomePage() {
     const [snackbarOpen, setSnackbarOpen] = useState(false);
     const [alertSeverity, setAlertSeverity] = useState('success');
     const { user, logout, loading } = useAuth();
+
+    //chat
+    const [selectedChat, setSelectedChat] = useState(null);
 
     //catlist
     const [catData, setCatData] = useState([]);
@@ -116,6 +121,11 @@ function HomePage() {
 
             return newState;
         });
+    };
+
+    //cat
+    const handleDirectMessageClick = (cat) => {
+        setSelectedChat(cat);
     };
 
     //user
@@ -201,7 +211,7 @@ function HomePage() {
     useEffect(() => {
         if (user) {
             fetchUserRole(user.uid);
-            fetchCatData()           
+            fetchCatData()
         }
     }, [user]);
 
@@ -367,7 +377,7 @@ function HomePage() {
                 <Grid item xs={12} sm={8} md={6}>
                     <Box>
                         <Container>
-                            <Card sx={{ minWidth: 275, mt:2 }}>
+                            <Card sx={{ minWidth: 275, mt: 2 }}>
                                 <CardContent>
                                     {!loading && user && (
                                         <>
@@ -435,8 +445,13 @@ function HomePage() {
                                         >
                                             <FavoriteIcon />
                                         </IconButton>
+
                                         <IconButton aria-label="share">
                                             <ShareIcon />
+                                        </IconButton>
+
+                                        <IconButton aria-label="direct message" onClick={() => handleDirectMessageClick(cat)}>
+                                            <ChatBubbleIcon />
                                         </IconButton>
                                         <ExpandMore
                                             expand={expanded.includes(cat.id)}
@@ -471,6 +486,9 @@ function HomePage() {
                 </Box>
             </Container>
 
+            {selectedChat && 
+                <ChatComponent cat={selectedChat} onClose={() => setSelectedChat(null)} />
+            }
         </>
     );
 }
