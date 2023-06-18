@@ -49,8 +49,6 @@ import {
     Paper,
 } from "@mui/material";
 
-//Auth
-import { useAuth } from './AuthContext';
 //other
 import Link from 'next/link';
 //firebase
@@ -58,7 +56,7 @@ import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import app from '../firebase/firebaseClient';
 
 
-function ChatComponent({ cat, onClose }) {
+function ChatComponent({ cat,userId, onClose }) {
     const [messages, setMessages] = useState([]);
     const [messageInput, setMessageInput] = useState("");
 
@@ -92,8 +90,11 @@ function ChatComponent({ cat, onClose }) {
             return;
         }
 
+        console.log(userId)
+
         const newMessage = {
             text: messageInput,
+            userId: userId,
             timestamp: new Date().getTime(),
         };
 
@@ -104,7 +105,7 @@ function ChatComponent({ cat, onClose }) {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    catId: cat.id,
+                    catId: cat.id,           
                     message: newMessage,
                 }),
             });
@@ -156,7 +157,7 @@ function ChatComponent({ cat, onClose }) {
             <DialogContent>
                 {messages.map((message, index) => (
                     <div key={index} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <p>{message.text}</p>
+                        <p>{message.userId}: {message.text}</p>
                         <IconButton onClick={() => handleDelete(message.id)} edge="end" color="inherit">
                             <DeleteIcon />
                         </IconButton>

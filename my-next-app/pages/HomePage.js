@@ -486,8 +486,8 @@ function HomePage() {
                 </Box>
             </Container>
 
-            {selectedChat && 
-                <ChatComponent cat={selectedChat} onClose={() => setSelectedChat(null)} />
+            {selectedChat && user &&
+                <ChatComponent cat={selectedChat} userId={user.uid} onClose={() => setSelectedChat(null)} />
             }
         </>
     );
