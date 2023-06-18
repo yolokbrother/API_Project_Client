@@ -67,9 +67,6 @@ const ExpandMore = styled((props) => {
     }),
 }));
 
-// Initialize Firestore and Auth
-const firestore = getFirestore(app);
-
 export default function CatManagment() {
     const [anchorElNav, setAnchorElNav] = useState(null);
     const [anchorElUser, setAnchorElUser] = useState(null);
@@ -152,6 +149,31 @@ export default function CatManagment() {
             if (response.ok) {
                 const data = await response.json();
                 console.log("Cat added:", data.catId);
+
+                // Post the tweet after successful cat addition
+                const tweetText = `A new cat has been added! Meet ${catName}, a ${catBreed}, ${catDescription}`;
+
+                try {
+                    const tweetResponse = await fetch("http://localhost:3001/api/post-tweet", {
+                        method: "POST",
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': user.idToken,
+                        },
+                        body: JSON.stringify({ tweet: tweetText }),
+                    });
+
+                    if (tweetResponse.ok) {
+                        const tweetData = await tweetResponse.json();
+                        console.log("Tweet response data:", tweetData); // Add this line to log the response data
+                        const tweetUrl = `https://twitter.com/matthew18511535/status/${tweetData.tweetId}`;
+                        window.open(tweetUrl, '_blank');
+                    } else {
+                        console.error("Error posting tweet");
+                    }
+                } catch (error) {
+                    console.error("Error posting tweet:", error);
+                }
 
                 // Reset the form fields
                 setCatImage("");
