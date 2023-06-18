@@ -87,6 +87,8 @@ export default function CatManagment() {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
+    //cat api
+    const [previewCatImageUrl, setPreviewCatImageUrl] = useState("");
 
     const handleProfile = () => {
         router.push('/Profile');
@@ -264,6 +266,56 @@ export default function CatManagment() {
             // Handle error
         }
     };
+
+    //cat helping function
+    const fetchBreedIdByName = async (breedName) => {
+        try {
+            const response = await fetch(`https://api.thecatapi.com/v1/breeds/search?q=${breedName}`);
+            const data = await response.json();
+            return data[0].id;
+        } catch (error) {
+            console.error("Error fetching breed ID:", error);
+        }
+    };
+
+    const fetchRandomCatImage = async (breedName) => {
+        try {
+            let imageUrl;
+
+            if (breedName) {
+                const breedId = await fetchBreedIdByName(breedName);
+                const response = await fetch(`https://api.thecatapi.com/v1/images/search?breed_ids=${breedId}`);
+                const data = await response.json();
+                imageUrl = data[0].url;
+            } else {
+                const response = await fetch("https://api.thecatapi.com/v1/images/search");
+                const data = await response.json();
+                imageUrl = data[0].url;
+            }
+
+            setPreviewCatImageUrl(imageUrl);
+        } catch (error) {
+            console.error("Error fetching random cat image:", error);
+        }
+    };
+
+    const showBreedImage = async () => {
+        if (catBreed) {
+            fetchRandomCatImage(catBreed);
+        } else {
+            setPreviewCatImageUrl("");
+        }
+    };
+
+    useEffect(() => {
+        showBreedImage();
+    }, [catBreed]);
+
+    useEffect(() => {
+        if (catBreed) {
+            fetchRandomCatImage(catBreed);
+        }
+    }, [catBreed]);
 
     //called whenever the user prop updates
     useEffect(() => {
@@ -511,6 +563,32 @@ export default function CatManagment() {
                                     </form>
                                 </>
                             )}
+                        </Grid>
+                    </Grid>
+                </Box>
+            </Container>
+
+            <Container maxWidth="md" sx={{ mt: 5, mb: 5 }}>
+                <Box>
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} sm={12} md={12}>
+                            <Card sx={{ minWidth: 275 }}>
+                                <Typography variant="h6" gutterBottom>
+                                    Breed selection helper
+                                </Typography>
+                                <input
+                                    type="text"
+                                    value={catBreed}
+                                    onChange={(e) => setCatBreed(e.target.value)}
+                                    placeholder="Cat Breed"
+                                />
+                                {previewCatImageUrl && (
+                                    <div>
+                                        <img src={previewCatImageUrl} alt="Preview of cat breed" style={{ maxWidth: "100%", maxHeight: "300px" }} />
+                                        <p>Image from The Cat API</p>
+                                    </div>
+                                )}
+                            </Card>
                         </Grid>
                     </Grid>
                 </Box>
