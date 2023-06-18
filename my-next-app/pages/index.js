@@ -8,7 +8,8 @@ import Alert from '@mui/material/Alert';
 import Toolbar from '@mui/material/Toolbar';
 import AppBar from '@mui/material/AppBar';
 import { auth } from '../firebase/firebaseClient';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useRouter } from 'next/router';
 import { useAuth } from './AuthContext';
 import { getIdToken } from 'firebase/auth';
@@ -22,11 +23,59 @@ const Homepage = () => {
 
   const router = useRouter();
 
+  //handle Google sign-in
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    const db = getFirestore(); // Initialize Firestore
+  
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      const idToken = await getIdToken(user);
+  
+      // Access the email of the signed-in Google account
+      const googleAccountEmail = user.email;
+      const uid = user.uid;
+  
+      console.log('User signed in with Google:', user);
+      console.log('User ID token:', idToken);
+      console.log('Google account email:', googleAccountEmail);
+  
+      // Check if userProfile exists in the Firestore collection
+      const userProfileRef = doc(db, 'userProfile', uid);
+      const userProfileDoc = await getDoc(userProfileRef);
+  
+      // If userProfile doesn't exist, create a new userProfile document
+      if (!userProfileDoc.exists()) {
+        const userName = 'default'; // You can set this value based on your requirements
+        const role = 'public'; // You can set this value based on your requirements
+  
+        await setDoc(userProfileRef, {
+          userName,
+          email: googleAccountEmail,
+          role,
+        });
+  
+        console.log('New userProfile created for Google user:', uid);
+      } else {
+        console.log('User profile already exists:', uid);
+      }
+  
+      login(googleAccountEmail, uid, idToken);
+      // Redirect to your desired page after successful sign-in
+      router.push('/HomePage');
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message });
+    }
+  };
+
   const handleSubmit = async (e, action) => {
     e.preventDefault();
     setMessage(null);
 
-    if (action === 'login') {
+    if (action === 'google') {
+      signInWithGoogle();
+    } else if (action === 'login') {
       signInWithEmailAndPassword(auth, email, password)
         .then(async (userCredential) => {
           // Call your /api/login endpoint to fetch the user record
@@ -123,6 +172,7 @@ const Homepage = () => {
             <Button variant="contained" onClick={(e) => handleSubmit(e, "login")} sx={{ ml: 2 }}>
               Login
             </Button>
+            <Button variant="contained" onClick={(e) => handleSubmit(e, 'google')} sx={{ ml: 2 }}>Sign in with Google</Button>
           </Box>
         </form>
       </Box>
